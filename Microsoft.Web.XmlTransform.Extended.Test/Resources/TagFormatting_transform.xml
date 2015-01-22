@@ -37,9 +37,9 @@
     </appSettings>
   </location>
 
-  <collection>
+  <list>
     <item>
       <property xct:Transform="InsertMultiple"/>
     </item>
-  </collection>
+  </list>
 </configuration>

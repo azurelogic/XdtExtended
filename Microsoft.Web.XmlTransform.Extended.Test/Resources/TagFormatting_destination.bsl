@@ -53,8 +53,9 @@
     </location>
 
   <!-- Children of this collection element should all have a property element added to them -->
-  <collection>
+  <list>
     <item>
+      <field/>
       <property/>
     </item>
     <item>
@@ -63,7 +64,7 @@
     <item>
       <property/>
     </item>
-  </collection>
+  </list>
 
   <!-- A new appSettings section will be added below here -->
   <appSettings>
