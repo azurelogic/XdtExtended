@@ -1,10 +1,10 @@
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Xml;
-using System.IO;
-using System.Diagnostics;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     public class XmlFileInfoDocument : XmlDocument, IDisposable
     {

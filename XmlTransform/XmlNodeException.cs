@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 using System.Security.Permissions;
 using System.Xml;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     [Serializable]
     public sealed class XmlNodeException : XmlTransformationException

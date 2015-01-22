@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Web.XmlTransform.Extended;
 
 namespace Microsoft.Web.XmlTransform.Test
 {

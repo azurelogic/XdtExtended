@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Xml;
-using System.Diagnostics;
-using RegularExpressions = System.Text.RegularExpressions;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     internal static class CommonErrors
     {
@@ -30,7 +29,7 @@ namespace Microsoft.Web.XmlTransform
             CommonErrors.ExpectNoArguments(Log, TransformNameShort, ArgumentString);
             CommonErrors.WarnIfMultipleTargets(Log, TransformNameShort, TargetNodes, ApplyTransformToAllTargetNodes);
 
-            XmlNode parentNode = TargetNode.ParentNode;
+            var parentNode = TargetNode.ParentNode;
             parentNode.ReplaceChild(
                 TransformNode,
                 TargetNode);
@@ -267,27 +266,27 @@ namespace Microsoft.Web.XmlTransform
         }
 
 
-        static private RegularExpressions.Regex _sDirRegex;
-        static private RegularExpressions.Regex _sParentAttribRegex;
-        static private RegularExpressions.Regex _sTokenFormatRegex;
+        static private System.Text.RegularExpressions.Regex _sDirRegex;
+        static private System.Text.RegularExpressions.Regex _sParentAttribRegex;
+        static private System.Text.RegularExpressions.Regex _sTokenFormatRegex;
 
         // Directory registrory
-        static internal RegularExpressions.Regex DirRegex
+        static internal System.Text.RegularExpressions.Regex DirRegex
         {
-            get { return _sDirRegex ?? (_sDirRegex = new RegularExpressions.Regex(@"\G\{%(\s*(?<attrname>\w+(?=\W))(\s*(?<equal>=)\s*'(?<attrval>[^']*)'|\s*(?<equal>=)\s*(?<attrval>[^\s%>]*)|(?<equal>)(?<attrval>\s*?)))*\s*?%\}")); }
+            get { return _sDirRegex ?? (_sDirRegex = new System.Text.RegularExpressions.Regex(@"\G\{%(\s*(?<attrname>\w+(?=\W))(\s*(?<equal>=)\s*'(?<attrval>[^']*)'|\s*(?<equal>=)\s*(?<attrval>[^\s%>]*)|(?<equal>)(?<attrval>\s*?)))*\s*?%\}")); }
         }
 
-        static internal RegularExpressions.Regex ParentAttributeRegex
+        static internal System.Text.RegularExpressions.Regex ParentAttributeRegex
         {
             get {
-                return _sParentAttribRegex ?? (_sParentAttribRegex = new RegularExpressions.Regex(@"\G\$\((?<tagname>[\w:\.]+)\)"));
+                return _sParentAttribRegex ?? (_sParentAttribRegex = new System.Text.RegularExpressions.Regex(@"\G\$\((?<tagname>[\w:\.]+)\)"));
             }
         }
 
-        static internal RegularExpressions.Regex TokenFormatRegex
+        static internal System.Text.RegularExpressions.Regex TokenFormatRegex
         {
             get {
-                return _sTokenFormatRegex ?? (_sTokenFormatRegex = new RegularExpressions.Regex(@"\G\#\((?<tagname>[\w:\.]+)\)"));
+                return _sTokenFormatRegex ?? (_sTokenFormatRegex = new System.Text.RegularExpressions.Regex(@"\G\#\((?<tagname>[\w:\.]+)\)"));
             }
         }
 
@@ -319,16 +318,16 @@ namespace Microsoft.Web.XmlTransform
         }
 
 
-        protected static string SubstituteKownValue(string transformValue, RegularExpressions.Regex patternRegex, string patternPrefix,  GetValueCallback getValueDelegate )
+        protected static string SubstituteKownValue(string transformValue, System.Text.RegularExpressions.Regex patternRegex, string patternPrefix,  GetValueCallback getValueDelegate )
         {
             var position = 0;
-            var matchsExpr = new List<RegularExpressions.Match>();
+            var matchsExpr = new List<System.Text.RegularExpressions.Match>();
             do
             {
                 position = transformValue.IndexOf(patternPrefix, position, StringComparison.OrdinalIgnoreCase);
                 if (position > -1)
                 {
-                    RegularExpressions.Match match = patternRegex.Match(transformValue, position);
+                    System.Text.RegularExpressions.Match match = patternRegex.Match(transformValue, position);
                     // Add the successful match to collection
                     if (match.Success)
                     {
@@ -347,10 +346,10 @@ namespace Microsoft.Web.XmlTransform
             
             strbuilder.Remove(0, strbuilder.Length);
             position = 0;
-            foreach (RegularExpressions.Match match in matchsExpr)
+            foreach (System.Text.RegularExpressions.Match match in matchsExpr)
             {
                 strbuilder.Append(transformValue.Substring(position, match.Index - position));
-                RegularExpressions.Capture captureTagName = match.Groups["tagname"];
+                System.Text.RegularExpressions.Capture captureTagName = match.Groups["tagname"];
                 var attributeName = captureTagName.Value;
 
                 var newValue = getValueDelegate(attributeName);
@@ -440,7 +439,7 @@ namespace Microsoft.Web.XmlTransform
             if (!fTokenizeParameter || parameters == null) return transformValue;
             var strbuilder = new StringBuilder(transformValue.Length);
             var position = 0;
-            var matchs = new List<RegularExpressions.Match>();
+            var matchs = new List<System.Text.RegularExpressions.Match>();
 
             do
             {
@@ -471,7 +470,7 @@ namespace Microsoft.Web.XmlTransform
                 var attrnames = match.Groups["attrname"].Captures;
                 if (attrnames != null && attrnames.Count > 0)
                 {
-                    RegularExpressions.CaptureCollection attrvalues = match.Groups["attrval"].Captures;
+                    System.Text.RegularExpressions.CaptureCollection attrvalues = match.Groups["attrval"].Captures;
                     var paramDictionary = new Dictionary<string, string>(4, StringComparer.OrdinalIgnoreCase);
 
                     paramDictionary[XPathWithIndex] = xpath;

@@ -1,9 +1,9 @@
 using System;
-using System.Xml;
 using System.Diagnostics;
 using System.Globalization;
+using System.Xml;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     public class XmlTransformationLogger
     {

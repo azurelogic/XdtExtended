@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Xml;
 using System.Diagnostics;
+using System.Xml;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     public abstract class AttributeTransform : Transform
     {

@@ -1,8 +1,8 @@
 using System;
-using System.Xml;
 using System.Globalization;
+using System.Xml;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     internal sealed class DefaultLocator : Locator
     {

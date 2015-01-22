@@ -1,10 +1,10 @@
 using System;
 using System.ComponentModel.Design;
 using System.Diagnostics;
-using System.Xml;
 using System.IO;
+using System.Xml;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     public class XmlTransformation : IServiceProvider, IDisposable
     {

@@ -1,6 +1,6 @@
 using System;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     // This doesn't do anything, except mark an error as having come from
     // the transformation engine

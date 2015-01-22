@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Xml;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Xml;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     internal class XmlAttributePreservationDict
     {

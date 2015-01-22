@@ -1,6 +1,6 @@
 using System.Xml;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     public class XmlTransformableDocument : XmlFileInfoDocument, IXmlOriginalDocumentService
     {

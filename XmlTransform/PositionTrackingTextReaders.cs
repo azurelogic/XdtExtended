@@ -1,8 +1,8 @@
 using System;
-using System.Text;
 using System.IO;
+using System.Text;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     internal class PositionTrackingTextReader : TextReader
     {

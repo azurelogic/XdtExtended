@@ -9,8 +9,8 @@
   <PropertyGroup>
     <ProjectGuid>{0684EE2A-6F30-4BC7-B5E7-8CBA15534E06}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Microsoft.Web.XmlTransform</RootNamespace>
-    <AssemblyName>Microsoft.Web.XmlTransform</AssemblyName>
+    <RootNamespace>Microsoft.Web.XmlTransform.Extended</RootNamespace>
+    <AssemblyName>Microsoft.Web.XmlTransform.Extended</AssemblyName>
   </PropertyGroup>
   <!--If we have no common settings file, let us set up each individual property here -->
   <PropertyGroup Condition="!$(ExtensionsCommonTargetsExists)">

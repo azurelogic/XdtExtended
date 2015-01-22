@@ -1,6 +1,6 @@
 using System;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     public enum MessageType {
         Normal,

@@ -5,6 +5,9 @@
     <ExtensionsCommonTargetsExists>false</ExtensionsCommonTargetsExists>
     <ExtensionsCommonTargetsExists Condition="Exists('$(ExtensionsCommonTargets)')">true</ExtensionsCommonTargetsExists>
   </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>Microsoft.Web.XmlTransform.Test</RootNamespace>
+  </PropertyGroup>
   <Import Project="$(ExtensionsCommonTargets)" Condition="$(ExtensionsCommonTargetsExists)" />
   <PropertyGroup>
     <AssemblyName>Microsoft.Web.XmlTransform.Test</AssemblyName>

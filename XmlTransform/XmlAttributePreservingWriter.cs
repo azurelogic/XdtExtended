@@ -1,12 +1,12 @@
 using System;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
-using System.IO;
-using System.Diagnostics;
-using System.Globalization;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     internal class XmlAttributePreservingWriter : XmlWriter
     {

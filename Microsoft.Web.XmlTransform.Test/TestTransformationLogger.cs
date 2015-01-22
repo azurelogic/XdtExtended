@@ -1,13 +1,14 @@
 using System;
 using System.Diagnostics;
 using System.Text;
+using Microsoft.Web.XmlTransform.Extended;
 
 namespace Microsoft.Web.XmlTransform.Test
 {
     internal class TestTransformationLogger : IXmlTransformationLogger
     {
         private int _indentLevel;
-        private const string indentStringPiece = "  ";
+        private const string IndentStringPiece = "  ";
         private string _indentString;
         private readonly StringBuilder _log = new StringBuilder();
 
@@ -19,7 +20,7 @@ namespace Microsoft.Web.XmlTransform.Test
                 _indentString = String.Empty;
                 for (var i = 0; i < _indentLevel; i++)
                 {
-                    _indentString += indentStringPiece;
+                    _indentString += IndentStringPiece;
                 }
                 return _indentString;
             }

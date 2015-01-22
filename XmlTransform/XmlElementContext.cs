@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Xml;
-using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
+using System.Xml;
 
-namespace Microsoft.Web.XmlTransform
+namespace Microsoft.Web.XmlTransform.Extended
 {
     internal class XmlElementContext : XmlNodeContext
     {
@@ -248,7 +248,6 @@ namespace Microsoft.Web.XmlTransform
 
         private XmlNodeList GetTargetNodes(string xpath)
         {
-            XmlNamespaceManager mgr = GetNamespaceManager();
             return TargetDocument.SelectNodes(xpath, GetNamespaceManager());
         }
 
