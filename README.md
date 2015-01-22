@@ -1,8 +1,6 @@
 # XdtExtended
 Extended version of Microsoft's XML Document Transform (XDT) library
 
-I forked this to be able to extend the XDT syntax for versioning custom XML config files for a project.
-
 Original source: http://xdt.codeplex.com/
 
 ##Documentation
