@@ -29,11 +29,7 @@ namespace Microsoft.Web.XmlTransform.Extended
                 var nodeException = ex as XmlNodeException;
                 if (nodeException != null && nodeException.HasErrorInfo)
                 {
-                    _externalLogger.LogErrorFromException(
-                        nodeException,
-                        ConvertUriToFileName(nodeException.FileName),
-                        nodeException.LineNumber,
-                        nodeException.LinePosition);
+                    _externalLogger.LogErrorFromException(nodeException, ConvertUriToFileName(nodeException.FileName), nodeException.LineNumber, nodeException.LinePosition);
                 }
                 else
                 {

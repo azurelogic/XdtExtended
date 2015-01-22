@@ -1,9 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.Text;
-using Microsoft.Web.XmlTransform.Extended;
 
-namespace Microsoft.Web.XmlTransform.Test
+namespace Microsoft.Web.XmlTransform.Extended.Test
 {
     internal class TestTransformationLogger : IXmlTransformationLogger
     {

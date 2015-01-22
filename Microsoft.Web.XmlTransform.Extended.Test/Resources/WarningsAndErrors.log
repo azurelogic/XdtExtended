@@ -1,6 +1,6 @@
 ﻿transform.config (43, 4) warning: Unknown tag 'xct:Foo'
 transform.config (5, 10) error: Could not resolve 'Foo' as a type of Transform
-transform.config (6, 10) error: 'Microsoft.Web.XmlTransform.Match' is not a type of Transform
+transform.config (6, 10) error: 'Microsoft.Web.XmlTransform.Extended.Match' is not a type of Transform
 transform.config (9, 10) error: Could not resolve 'NoValidConstructor' as a type of Transform
 transform.config (12, 20) error: Transform and Locator attributes must contain only a type name, or a type name followed by a list of attributes in parentheses.
 transform.config (13, 20) error: Transform and Locator attributes must contain only a type name, or a type name followed by a list of attributes in parentheses.

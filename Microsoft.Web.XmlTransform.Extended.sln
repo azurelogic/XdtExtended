@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Web.XmlTransform.Test", "Microsoft.Web.XmlTransform.Test\Microsoft.Web.XmlTransform.Test.csproj", "{22AC988D-26C0-43A9-8EB1-102DA31F0F8F}"
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Web.XmlTransform.Extended.Test", "Microsoft.Web.XmlTransform.Extended.Test\Microsoft.Web.XmlTransform.Extended.Test.csproj", "{22AC988D-26C0-43A9-8EB1-102DA31F0F8F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Web.XmlTransform", "XmlTransform\Microsoft.Web.XmlTransform.csproj", "{0684EE2A-6F30-4BC7-B5E7-8CBA15534E06}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Web.XmlTransform.Extended", "XmlTransform\Microsoft.Web.XmlTransform.Extended.csproj", "{0684EE2A-6F30-4BC7-B5E7-8CBA15534E06}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

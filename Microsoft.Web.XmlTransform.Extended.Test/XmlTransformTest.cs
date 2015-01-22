@@ -1,10 +1,9 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.Web.XmlTransform.Extended;
 
-namespace Microsoft.Web.XmlTransform.Test
+namespace Microsoft.Web.XmlTransform.Extended.Test
 {
     [TestClass]
     public class XmlTransformTest

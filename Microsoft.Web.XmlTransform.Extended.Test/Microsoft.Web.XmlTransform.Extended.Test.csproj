@@ -6,11 +6,11 @@
     <ExtensionsCommonTargetsExists Condition="Exists('$(ExtensionsCommonTargets)')">true</ExtensionsCommonTargetsExists>
   </PropertyGroup>
   <PropertyGroup>
-    <RootNamespace>Microsoft.Web.XmlTransform.Test</RootNamespace>
+    <RootNamespace>Microsoft.Web.XmlTransform.Extended.Test</RootNamespace>
   </PropertyGroup>
   <Import Project="$(ExtensionsCommonTargets)" Condition="$(ExtensionsCommonTargetsExists)" />
   <PropertyGroup>
-    <AssemblyName>Microsoft.Web.XmlTransform.Test</AssemblyName>
+    <AssemblyName>Microsoft.Web.XmlTransform.Extended.Test</AssemblyName>
     <ProjectGuid>{22AC988D-26C0-43A9-8EB1-102DA31F0F8F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -51,9 +51,9 @@
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\XmlTransform\Microsoft.Web.XmlTransform.csproj">
+    <ProjectReference Include="..\XmlTransform\Microsoft.Web.XmlTransform.Extended.csproj">
       <Project>{0684ee2a-6f30-4bc7-b5e7-8cba15534e06}</Project>
-      <Name>Microsoft.Web.XmlTransform</Name>
+      <Name>Microsoft.Web.XmlTransform.Extended</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
