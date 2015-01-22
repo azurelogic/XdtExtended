@@ -36,4 +36,10 @@
       <add key="SomePathSetting" value="Just a test of deep nesting"/>
     </appSettings>
   </location>
+
+  <collection>
+    <item>
+      <property xct:Transform="InsertMultiple"/>
+    </item>
+  </collection>
 </configuration>

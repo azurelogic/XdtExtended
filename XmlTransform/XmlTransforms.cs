@@ -83,6 +83,15 @@ namespace Microsoft.Web.XmlTransform.Extended
         }
     }
 
+    // inspired by: http://stackoverflow.com/a/23294251/2836187
+    internal class InsertMultiple : Insert
+    {
+        public InsertMultiple()
+        {
+            ApplyTransformToAllTargetNodes = true;
+        }
+    }
+
     internal class InsertIfMissing : Insert
     {
         protected override void Apply()

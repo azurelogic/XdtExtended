@@ -52,6 +52,19 @@
 	</appSettings>
     </location>
 
+  <!-- Children of this collection element should all have a property element added to them -->
+  <collection>
+    <item>
+      <property/>
+    </item>
+    <item>
+      <property/>
+    </item>
+    <item>
+      <property/>
+    </item>
+  </collection>
+
   <!-- A new appSettings section will be added below here -->
   <appSettings>
     <!-- This appSettings section should be added to the end 
