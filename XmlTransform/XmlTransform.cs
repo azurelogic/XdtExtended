@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Xml;
 using System.Diagnostics;
 
@@ -26,92 +25,69 @@ namespace Microsoft.Web.XmlTransform
     public abstract class Transform
     {
         #region private data members
-        private MissingTargetMessage missingTargetMessage;
-        private bool applyTransformToAllTargetNodes;
-        private bool useParentAsTargetNode;
 
-        private XmlTransformationLogger logger = null;
-        private XmlElementContext context = null;
-        private XmlNode currentTransformNode = null;
-        private XmlNode currentTargetNode = null;
+        private XmlTransformationLogger _logger;
+        private XmlElementContext _context;
+        private XmlNode _currentTransformNode;
+        private XmlNode _currentTargetNode;
 
-        private string argumentString = null;
-        private IList<string> arguments = null;
+        private string _argumentString;
+        private IList<string> _arguments;
         #endregion
 
         protected Transform()
-            : this(TransformFlags.None) {
+            : this(TransformFlags.None)
+        {
         }
 
         protected Transform(TransformFlags flags)
-            : this(flags, MissingTargetMessage.Warning) {
+            : this(flags, MissingTargetMessage.Warning)
+        {
         }
 
-        protected Transform(TransformFlags flags, MissingTargetMessage message) {
-            this.missingTargetMessage = message;
-            this.applyTransformToAllTargetNodes = (flags & TransformFlags.ApplyTransformToAllTargetNodes) == TransformFlags.ApplyTransformToAllTargetNodes;
-            this.useParentAsTargetNode = (flags & TransformFlags.UseParentAsTargetNode) == TransformFlags.UseParentAsTargetNode;
+        protected Transform(TransformFlags flags, MissingTargetMessage message)
+        {
+            MissingTargetMessage = message;
+            ApplyTransformToAllTargetNodes = (flags & TransformFlags.ApplyTransformToAllTargetNodes) == TransformFlags.ApplyTransformToAllTargetNodes;
+            UseParentAsTargetNode = (flags & TransformFlags.UseParentAsTargetNode) == TransformFlags.UseParentAsTargetNode;
         }
 
-        protected bool ApplyTransformToAllTargetNodes {
-            get {
-                return applyTransformToAllTargetNodes;
-            }
-            set {
-                applyTransformToAllTargetNodes = value;
-            }
-        }
+        protected bool ApplyTransformToAllTargetNodes { get; set; }
 
-        protected bool UseParentAsTargetNode {
-            get {
-                return useParentAsTargetNode;
-            }
-            set {
-                useParentAsTargetNode = value;
-            }
-        }
+        protected bool UseParentAsTargetNode { get; set; }
 
-        protected MissingTargetMessage MissingTargetMessage {
-            get {
-                return missingTargetMessage;
-            }
-            set {
-                missingTargetMessage = value;
-            }
-        }
+        protected MissingTargetMessage MissingTargetMessage { get; set; }
 
         protected abstract void Apply();
 
-        protected XmlNode TransformNode {
-            get {
-                if (currentTransformNode == null) {
-                    return context.TransformNode;
-                }
-                else {
-                    return currentTransformNode;
-                }
+        protected XmlNode TransformNode
+        {
+            get
+            {
+                return _currentTransformNode ?? _context.TransformNode;
             }
         }
 
-        protected XmlNode TargetNode {
-            get {
-                if (currentTargetNode == null) {
-                    foreach (XmlNode targetNode in TargetNodes) {
+        protected XmlNode TargetNode
+        {
+            get
+            {
+                if (_currentTargetNode == null)
+                {
+                    foreach (XmlNode targetNode in TargetNodes)
+                    {
                         return targetNode;
                     }
                 }
-                return currentTargetNode;
+                return _currentTargetNode;
             }
         }
 
-        protected XmlNodeList TargetNodes {
-            get {
-                if (UseParentAsTargetNode) {
-                    return context.TargetParents;
-                }
-                else {
-                    return context.TargetNodes;
-                }
+        protected XmlNodeList TargetNodes
+        {
+            get
+            {
+                return UseParentAsTargetNode ? _context.TargetParents : _context.TargetNodes;
             }
         }
 
@@ -120,19 +96,23 @@ namespace Microsoft.Web.XmlTransform
         {
             get
             {
-                return context.TargetNodes;
+                return _context.TargetNodes;
             }
         }
 
-        protected XmlTransformationLogger Log {
-            get {
-                if (logger == null) {
-                    logger = context.GetService<XmlTransformationLogger>();
-                    if (logger != null) {
-                        logger.CurrentReferenceNode = context.TransformAttribute;
+        protected XmlTransformationLogger Log
+        {
+            get
+            {
+                if (_logger == null)
+                {
+                    _logger = _context.GetService<XmlTransformationLogger>();
+                    if (_logger != null)
+                    {
+                        _logger.CurrentReferenceNode = _context.TransformAttribute;
                     }
                 }
-                return logger;
+                return _logger;
             }
         }
 
@@ -140,180 +120,184 @@ namespace Microsoft.Web.XmlTransform
 
         protected T GetService<T>() where T : class
         {
-            return context.GetService<T>();
+            return _context.GetService<T>();
         }
 
-        protected string ArgumentString {
-            get {
-                return argumentString;
+        protected string ArgumentString
+        {
+            get
+            {
+                return _argumentString;
             }
         }
 
-        protected IList<string> Arguments {
-            get {
-                if (arguments == null && argumentString != null) {
-                    arguments = XmlArgumentUtility.SplitArguments(argumentString);
-                }
-                return arguments;
+        protected IList<string> Arguments
+        {
+            get
+            {
+                return _arguments != null || _argumentString == null ? _arguments : XmlArgumentUtility.SplitArguments(_argumentString);
             }
         }
 
-        private string TransformNameLong {
-            get {
-                if (context.HasLineInfo) {
-                    return string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_TransformNameFormatLong, TransformName, context.TransformLineNumber, context.TransformLinePosition);
-                }
-                else {
-                    return TransformNameShort;
-                }
+        private string TransformNameLong
+        {
+            get
+            {
+                return _context.HasLineInfo ? string.Format(System.Globalization.CultureInfo.CurrentCulture, SR.XMLTRANSFORMATION_TransformNameFormatLong, TransformName, _context.TransformLineNumber, _context.TransformLinePosition) : TransformNameShort;
             }
         }
 
-        internal string TransformNameShort {
-            get {
-                return string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_TransformNameFormatShort, TransformName);
+        internal string TransformNameShort
+        {
+            get
+            {
+                return string.Format(System.Globalization.CultureInfo.CurrentCulture, SR.XMLTRANSFORMATION_TransformNameFormatShort, TransformName);
             }
         }
 
-        private string TransformName {
-            get {
+        private string TransformName
+        {
+            get
+            {
                 return GetType().Name;
             }
         }
 
-        internal void Execute(XmlElementContext context, string argumentString) {
-            Debug.Assert(this.context == null && this.argumentString == null, "Don't call Execute recursively");
-            Debug.Assert(this.logger == null, "Logger wasn't released from previous execution");
+        internal void Execute(XmlElementContext context, string argumentString)
+        {
+            Debug.Assert(_context == null && _argumentString == null, "Don't call Execute recursively");
+            Debug.Assert(_logger == null, "Logger wasn't released from previous execution");
 
-            if (this.context == null && this.argumentString == null) {
-                bool error = false;
-                bool startedSection = false;
+            if (_context != null || _argumentString != null) return;
+            var error = false;
+            var startedSection = false;
 
-                try {
-                    this.context = context;
-                    this.argumentString = argumentString;
-                    this.arguments = null;
+            try
+            {
+                _context = context;
+                _argumentString = argumentString;
+                _arguments = null;
 
-                    if (ShouldExecuteTransform()) {
-                        startedSection = true;
+                if (!ShouldExecuteTransform()) return;
+                startedSection = true;
 
-                        Log.StartSection(MessageType.Verbose, SR.XMLTRANSFORMATION_TransformBeginExecutingMessage, TransformNameLong);
-                        Log.LogMessage(MessageType.Verbose, SR.XMLTRANSFORMATION_TransformStatusXPath, context.XPath);
+                Log.StartSection(MessageType.Verbose, SR.XMLTRANSFORMATION_TransformBeginExecutingMessage, TransformNameLong);
+                Log.LogMessage(MessageType.Verbose, SR.XMLTRANSFORMATION_TransformStatusXPath, context.XPath);
 
-                        if (ApplyTransformToAllTargetNodes) {
-                            ApplyOnAllTargetNodes();
-                        }
-                        else {
-                            ApplyOnce();
-                        }
-                    }
+                if (ApplyTransformToAllTargetNodes)
+                {
+                    ApplyOnAllTargetNodes();
                 }
-                catch (Exception ex) {
-                    error = true;
-                    if (context.TransformAttribute != null) {
-                        Log.LogErrorFromException(XmlNodeException.Wrap(ex, context.TransformAttribute));
-                    }
-                    else {
-                        Log.LogErrorFromException(ex);
-                    }
+                else
+                {
+                    ApplyOnce();
                 }
-                finally {
-                    if (startedSection) {
-                        if (error) {
-                            Log.EndSection(MessageType.Verbose, SR.XMLTRANSFORMATION_TransformErrorExecutingMessage, TransformNameShort);
-                        }
-                        else {
-                            Log.EndSection(MessageType.Verbose, SR.XMLTRANSFORMATION_TransformEndExecutingMessage, TransformNameShort);
-                        }
-                    }
-                    else {
-                        Log.LogMessage(MessageType.Normal, SR.XMLTRANSFORMATION_TransformNotExecutingMessage, TransformNameLong);
-                    }
-
-                    this.context = null;
-                    this.argumentString = null;
-                    this.arguments = null;
-
-                    ReleaseLogger();
+            }
+            catch (Exception ex)
+            {
+                error = true;
+                Log.LogErrorFromException(context.TransformAttribute != null ? XmlNodeException.Wrap(ex, context.TransformAttribute) : ex);
+            }
+            finally
+            {
+                if (startedSection)
+                {
+                    var message = error ? SR.XMLTRANSFORMATION_TransformErrorExecutingMessage : SR.XMLTRANSFORMATION_TransformEndExecutingMessage;
+                    Log.EndSection(MessageType.Verbose, message, TransformNameShort);
                 }
+                else
+                {
+                    Log.LogMessage(MessageType.Normal, SR.XMLTRANSFORMATION_TransformNotExecutingMessage, TransformNameLong);
+                }
+
+                _context = null;
+                _argumentString = null;
+                _arguments = null;
+
+                ReleaseLogger();
             }
         }
 
-        private void ReleaseLogger() {
-            if (logger != null) {
-                logger.CurrentReferenceNode = null;
-                logger = null;
-            }
+        private void ReleaseLogger()
+        {
+            if (_logger == null) return;
+            _logger.CurrentReferenceNode = null;
+            _logger = null;
         }
 
-        private bool ApplyOnAllTargetNodes() {
-            bool error = false;
-            XmlNode originalTransformNode = TransformNode;
+        private bool ApplyOnAllTargetNodes()
+        {
+            var error = false;
+            var originalTransformNode = TransformNode;
 
-            foreach (XmlNode node in TargetNodes) {
-                try {
-                    currentTargetNode = node;
-                    currentTransformNode = originalTransformNode.Clone();
+            foreach (XmlNode node in TargetNodes)
+            {
+                try
+                {
+                    _currentTargetNode = node;
+                    _currentTransformNode = originalTransformNode.Clone();
 
                     ApplyOnce();
                 }
-                catch (Exception ex) {
+                catch (Exception ex)
+                {
                     Log.LogErrorFromException(ex);
                     error = true;
                 }
             }
 
-            currentTargetNode = null;
+            _currentTargetNode = null;
 
             return error;
         }
 
-        private void ApplyOnce() {
+        private void ApplyOnce()
+        {
             WriteApplyMessage(TargetNode);
             Apply();
         }
 
-        private void WriteApplyMessage(XmlNode targetNode) {
-            IXmlLineInfo lineInfo = targetNode as IXmlLineInfo;
-            if (lineInfo != null) {
+        private void WriteApplyMessage(XmlNode targetNode)
+        {
+            var lineInfo = targetNode as IXmlLineInfo;
+            if (lineInfo != null)
+            {
                 Log.LogMessage(MessageType.Verbose, SR.XMLTRANSFORMATION_TransformStatusApplyTarget, targetNode.Name, lineInfo.LineNumber, lineInfo.LinePosition);
             }
-            else {
+            else
+            {
                 Log.LogMessage(MessageType.Verbose, SR.XMLTRANSFORMATION_TransformStatusApplyTargetNoLineInfo, targetNode.Name);
             }
         }
 
-        private bool ShouldExecuteTransform() {
+        private bool ShouldExecuteTransform()
+        {
             return HasRequiredTarget();
         }
 
-        private bool HasRequiredTarget() {
-            bool hasRequiredTarget = false;
-            bool existedInOriginal = false;
+        private bool HasRequiredTarget()
+        {
+            bool existedInOriginal;
             XmlElementContext matchFailureContext;
 
-            if (UseParentAsTargetNode) {
-                hasRequiredTarget = context.HasTargetParent(out matchFailureContext, out existedInOriginal);
-            }
-            else {
-                hasRequiredTarget = context.HasTargetNode(out matchFailureContext, out existedInOriginal);
-            }
+            var hasRequiredTarget = UseParentAsTargetNode
+                ? _context.HasTargetParent(out matchFailureContext, out existedInOriginal)
+                : _context.HasTargetNode(out matchFailureContext, out existedInOriginal);
 
-            if (!hasRequiredTarget) {
-                HandleMissingTarget(matchFailureContext, existedInOriginal);
-                return false;
-            }
-
-            return true;
+            if (hasRequiredTarget) return true;
+            HandleMissingTarget(matchFailureContext, existedInOriginal);
+            return false;
         }
 
-        private void HandleMissingTarget(XmlElementContext matchFailureContext, bool existedInOriginal) {
-            string messageFormat = existedInOriginal
+        private void HandleMissingTarget(XmlElementContext matchFailureContext, bool existedInOriginal)
+        {
+            var messageFormat = existedInOriginal
                 ? SR.XMLTRANSFORMATION_TransformSourceMatchWasRemoved
                 : SR.XMLTRANSFORMATION_TransformNoMatchingTargetNodes;
 
-            string message = string.Format(System.Globalization.CultureInfo.CurrentCulture,messageFormat, matchFailureContext.XPath);
-            switch(MissingTargetMessage) {
+            var message = string.Format(System.Globalization.CultureInfo.CurrentCulture, messageFormat, matchFailureContext.XPath);
+            switch (MissingTargetMessage)
+            {
                 case MissingTargetMessage.None:
                     Log.LogMessage(MessageType.Verbose, message);
                     break;

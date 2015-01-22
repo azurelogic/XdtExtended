@@ -89,11 +89,9 @@ namespace Microsoft.Web.XmlTransform
         protected override void Apply()
         {
             CommonErrors.ExpectNoArguments(Log, TransformNameShort, ArgumentString);
-            if (this.TargetChildNodes == null || this.TargetChildNodes.Count == 0)
-            {
-                TargetNode.AppendChild(TransformNode);
-                Log.LogMessage(MessageType.Verbose, SR.XMLTRANSFORMATION_TransformMessageInsert, TransformNode.Name);
-            }
+            if (TargetChildNodes != null && TargetChildNodes.Count != 0) return;
+            TargetNode.AppendChild(TransformNode);
+            Log.LogMessage(MessageType.Verbose, SR.XMLTRANSFORMATION_TransformMessageInsert, TransformNode.Name);
         }
     }
 
@@ -105,33 +103,28 @@ namespace Microsoft.Web.XmlTransform
             : base(TransformFlags.UseParentAsTargetNode, MissingTargetMessage.Error) {
         }
 
-        private XmlElement siblingElement = null;
+        private XmlElement _siblingElement;
 
         protected XmlElement SiblingElement {
             get {
-                if (siblingElement == null) {
-                    if (Arguments == null || Arguments.Count == 0) {
-                        throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_InsertMissingArgument, GetType().Name));
-                    }
-                    else if (Arguments.Count > 1) {
-                        throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_InsertTooManyArguments, GetType().Name));
-                    }
-                    else {
-                        string xpath = Arguments[0];
-                        XmlNodeList siblings = TargetNode.SelectNodes(xpath);
-                        if (siblings.Count == 0) {
-                            throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_InsertBadXPath, xpath));
-                        }
-                        else {
-                            siblingElement = siblings[0] as XmlElement;
-                            if (siblingElement == null) {
-                                throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_InsertBadXPathResult, xpath));
-                            }
-                        }
-                    }
+                if (_siblingElement != null) return _siblingElement;
+                if (Arguments == null || Arguments.Count == 0) {
+                    throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_InsertMissingArgument, GetType().Name));
+                }
+                if (Arguments.Count > 1) {
+                    throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_InsertTooManyArguments, GetType().Name));
+                }
+                var xpath = Arguments[0];
+                var siblings = TargetNode.SelectNodes(xpath);
+                if (siblings.Count == 0) {
+                    throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_InsertBadXPath, xpath));
+                }
+                _siblingElement = siblings[0] as XmlElement;
+                if (_siblingElement == null) {
+                    throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_InsertBadXPathResult, xpath));
                 }
 
-                return siblingElement;
+                return _siblingElement;
             }
         }
     }
@@ -158,7 +151,7 @@ namespace Microsoft.Web.XmlTransform
     {
         protected override void Apply() {
             foreach (XmlAttribute transformAttribute in TransformAttributes) {
-                XmlAttribute targetAttribute = TargetNode.Attributes.GetNamedItem(transformAttribute.Name) as XmlAttribute;
+                var targetAttribute = TargetNode.Attributes.GetNamedItem(transformAttribute.Name) as XmlAttribute;
                 if (targetAttribute != null) {
                     targetAttribute.Value = transformAttribute.Value;
                 }
@@ -203,8 +196,8 @@ namespace Microsoft.Web.XmlTransform
     public class SetTokenizedAttributes : AttributeTransform
     {
 
-        private SetTokenizedAttributeStorage storageDictionary = null;
-        private bool fInitStorageDictionary = false;
+        private SetTokenizedAttributeStorage _storageDictionary;
+        private bool _fInitStorageDictionary;
         public static readonly string Token = "Token";
         public static readonly string TokenNumber = "TokenNumber";
         public static readonly string XPathWithIndex = "XPathWithIndex";
@@ -212,19 +205,19 @@ namespace Microsoft.Web.XmlTransform
         public static readonly string XpathLocator = "XpathLocator";
         public static readonly string XPathWithLocator = "XPathWithLocator";
 
-        private XmlAttribute tokenizeValueCurrentXmlAttribute = null;
+        private XmlAttribute _tokenizeValueCurrentXmlAttribute;
 
     
         protected SetTokenizedAttributeStorage TransformStorage
         {
             get
             {
-                if (storageDictionary == null && !fInitStorageDictionary)
+                if (_storageDictionary == null && !_fInitStorageDictionary)
                 {
-                    storageDictionary = GetService<SetTokenizedAttributeStorage>();
-                    fInitStorageDictionary = true;
+                    _storageDictionary = GetService<SetTokenizedAttributeStorage>();
+                    _fInitStorageDictionary = true;
                 }
-                return storageDictionary;
+                return _storageDictionary;
             }
         }
 
@@ -245,7 +238,7 @@ namespace Microsoft.Web.XmlTransform
 
             foreach (XmlAttribute transformAttribute in TransformAttributes)
             {
-                XmlAttribute targetAttribute = TargetNode.Attributes.GetNamedItem(transformAttribute.Name) as XmlAttribute;
+                var targetAttribute = TargetNode.Attributes.GetNamedItem(transformAttribute.Name) as XmlAttribute;
 
                 string newValue = TokenizeValue(targetAttribute, transformAttribute, fTokenizeParameter, parameters);
 
@@ -255,7 +248,7 @@ namespace Microsoft.Web.XmlTransform
                 }
                 else
                 {
-                    XmlAttribute newAttribute = (XmlAttribute)transformAttribute.Clone();
+                    var newAttribute = (XmlAttribute)transformAttribute.Clone();
                     newAttribute.Value = newValue;
                     TargetNode.Attributes.Append(newAttribute);
                 }
@@ -274,44 +267,27 @@ namespace Microsoft.Web.XmlTransform
         }
 
 
-        static private RegularExpressions.Regex s_dirRegex = null;
-        static private RegularExpressions.Regex s_parentAttribRegex = null;
-        static private RegularExpressions.Regex s_tokenFormatRegex = null;
+        static private RegularExpressions.Regex _sDirRegex;
+        static private RegularExpressions.Regex _sParentAttribRegex;
+        static private RegularExpressions.Regex _sTokenFormatRegex;
 
         // Directory registrory
         static internal RegularExpressions.Regex DirRegex
         {
-            get
-            {
-                if (s_dirRegex == null)
-                {
-                    s_dirRegex = new RegularExpressions.Regex(@"\G\{%(\s*(?<attrname>\w+(?=\W))(\s*(?<equal>=)\s*'(?<attrval>[^']*)'|\s*(?<equal>=)\s*(?<attrval>[^\s%>]*)|(?<equal>)(?<attrval>\s*?)))*\s*?%\}");
-                }
-                return s_dirRegex;
-            }
+            get { return _sDirRegex ?? (_sDirRegex = new RegularExpressions.Regex(@"\G\{%(\s*(?<attrname>\w+(?=\W))(\s*(?<equal>=)\s*'(?<attrval>[^']*)'|\s*(?<equal>=)\s*(?<attrval>[^\s%>]*)|(?<equal>)(?<attrval>\s*?)))*\s*?%\}")); }
         }
 
         static internal RegularExpressions.Regex ParentAttributeRegex
         {
-            get
-            {
-                if (s_parentAttribRegex == null)
-                {
-                    s_parentAttribRegex = new RegularExpressions.Regex(@"\G\$\((?<tagname>[\w:\.]+)\)"); 
-                }
-                return s_parentAttribRegex;
+            get {
+                return _sParentAttribRegex ?? (_sParentAttribRegex = new RegularExpressions.Regex(@"\G\$\((?<tagname>[\w:\.]+)\)"));
             }
         }
 
         static internal RegularExpressions.Regex TokenFormatRegex
         {
-            get
-            {
-                if (s_tokenFormatRegex == null)
-                {
-                    s_tokenFormatRegex = new RegularExpressions.Regex(@"\G\#\((?<tagname>[\w:\.]+)\)");
-                }
-                return s_tokenFormatRegex;
+            get {
+                return _sTokenFormatRegex ?? (_sTokenFormatRegex = new RegularExpressions.Regex(@"\G\#\((?<tagname>[\w:\.]+)\)"));
             }
         }
 
@@ -320,10 +296,10 @@ namespace Microsoft.Web.XmlTransform
         protected string GetAttributeValue(string attributeName)
         {
             string dataValue = null;
-            XmlAttribute sourceAttribute = TargetNode.Attributes.GetNamedItem(attributeName) as XmlAttribute;
+            var sourceAttribute = TargetNode.Attributes.GetNamedItem(attributeName) as XmlAttribute;
             if (sourceAttribute == null)
             {
-                if (string.Compare(attributeName, tokenizeValueCurrentXmlAttribute.Name, StringComparison.OrdinalIgnoreCase) != 0)
+                if (string.Compare(attributeName, _tokenizeValueCurrentXmlAttribute.Name, StringComparison.OrdinalIgnoreCase) != 0)
                 {   // if it is other attributename, we fall back to the current now 
                     sourceAttribute = TransformNode.Attributes.GetNamedItem(attributeName) as XmlAttribute;
                 }
@@ -339,21 +315,14 @@ namespace Microsoft.Web.XmlTransform
         //DirRegex treat single quote differently
         protected string EscapeDirRegexSpecialCharacter(string value, bool escape)
         {
-            if (escape)
-            {
-                return value.Replace("'", "&apos;");
-            }
-            else
-            {
-                return value.Replace("&apos;", "'");
-            }
+            return escape ? value.Replace("'", "&apos;") : value.Replace("&apos;", "'");
         }
 
 
         protected static string SubstituteKownValue(string transformValue, RegularExpressions.Regex patternRegex, string patternPrefix,  GetValueCallback getValueDelegate )
         {
-            int position = 0;
-            List<RegularExpressions.Match> matchsExpr = new List<RegularExpressions.Match>();
+            var position = 0;
+            var matchsExpr = new List<RegularExpressions.Match>();
             do
             {
                 position = transformValue.IndexOf(patternPrefix, position, StringComparison.OrdinalIgnoreCase);
@@ -373,36 +342,25 @@ namespace Microsoft.Web.XmlTransform
                 }
             } while (position > -1);
 
-            System.Text.StringBuilder strbuilder = new StringBuilder(transformValue.Length);
-            if (matchsExpr.Count > 0)
+            var strbuilder = new StringBuilder(transformValue.Length);
+            if (matchsExpr.Count <= 0) return transformValue;
+            
+            strbuilder.Remove(0, strbuilder.Length);
+            position = 0;
+            foreach (RegularExpressions.Match match in matchsExpr)
             {
-                strbuilder.Remove(0, strbuilder.Length);
-                position = 0;
-                int index = 0;
-                foreach (RegularExpressions.Match match in matchsExpr)
-                {
-                    strbuilder.Append(transformValue.Substring(position, match.Index - position));
-                    RegularExpressions.Capture captureTagName = match.Groups["tagname"];
-                    string attributeName = captureTagName.Value;
+                strbuilder.Append(transformValue.Substring(position, match.Index - position));
+                RegularExpressions.Capture captureTagName = match.Groups["tagname"];
+                var attributeName = captureTagName.Value;
 
-                    string newValue = getValueDelegate(attributeName);
+                var newValue = getValueDelegate(attributeName);
 
-                    if (newValue != null) // null indicate that the attribute is not exist
-                    {
-                        strbuilder.Append(newValue);
-                    }
-                    else
-                    {
-                        // keep original value
-                        strbuilder.Append(match.Value);
-                    }
-                    position = match.Index + match.Length;
-                    index++;
-                }
-                strbuilder.Append(transformValue.Substring(position));
-
-                transformValue = strbuilder.ToString();
+                strbuilder.Append(newValue ?? match.Value);
+                position = match.Index + match.Length;
             }
+            strbuilder.Append(transformValue.Substring(position));
+
+            transformValue = strbuilder.ToString();
 
             return transformValue;
         }
@@ -414,49 +372,46 @@ namespace Microsoft.Web.XmlTransform
 
         private string GetXPathToAttribute(XmlAttribute xmlAttribute, IList<string> locators)
         {
-            string path = string.Empty;
-            if (xmlAttribute != null)
+            var path = string.Empty;
+            if (xmlAttribute == null) return path;
+            
+            var pathToNode = GetXPathToNode(xmlAttribute.OwnerElement);
+            if (!string.IsNullOrEmpty(pathToNode))
             {
-                string pathToNode = GetXPathToNode(xmlAttribute.OwnerElement);
-                if (!string.IsNullOrEmpty(pathToNode))
+                var identifier = new StringBuilder(256);
+                if (!(locators == null || locators.Count == 0))
                 {
-                    System.Text.StringBuilder identifier = new StringBuilder(256);
-                    if (!(locators == null || locators.Count == 0))
+                    foreach (var match in locators)
                     {
-                        foreach (string match in locators)
+                        var val = GetAttributeValue(match);
+                        if (!string.IsNullOrEmpty(val))
                         {
-                            string val = this.GetAttributeValue(match);
-                            if (!string.IsNullOrEmpty(val))
+                            if (identifier.Length != 0)
                             {
-                                if (identifier.Length != 0)
-                                {
-                                    identifier.Append(" and ");
-                                }
-                                identifier.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "@{0}='{1}'", match, val));
+                                identifier.Append(" and ");
                             }
-                            else
-                            {
-                                throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_MatchAttributeDoesNotExist, match));
-                            }
+                            identifier.Append(String.Format(System.Globalization.CultureInfo.InvariantCulture, "@{0}='{1}'", match, val));
+                        }
+                        else
+                        {
+                            throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_MatchAttributeDoesNotExist, match));
                         }
                     }
-
-                    if (identifier.Length == 0) 
-                    {
-                        for (int i = 0; i < TargetNodes.Count; i++)
-                        {
-                            if (TargetNodes[i] == xmlAttribute.OwnerElement)
-                            {
-                                // Xpath is 1 based
-                                identifier.Append((i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture));
-                                break;
-                            }
-                        }
-                    }
-                    pathToNode = string.Concat(pathToNode, "[", identifier.ToString(), "]");
                 }
-                path = string.Concat(pathToNode, "/@", xmlAttribute.Name);
+
+                if (identifier.Length == 0) 
+                {
+                    for (var i = 0; i < TargetNodes.Count; i++)
+                    {
+                        if (TargetNodes[i] != xmlAttribute.OwnerElement) continue;
+                        // Xpath is 1 based
+                        identifier.Append((i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture));
+                        break;
+                    }
+                }
+                pathToNode = string.Concat(pathToNode, "[", identifier.ToString(), "]");
             }
+            path = string.Concat(pathToNode, "/@", xmlAttribute.Name);
             return path;
         }
 
@@ -466,136 +421,126 @@ namespace Microsoft.Web.XmlTransform
             {
                 return null;
             }
-            string parentPath = GetXPathToNode(xmlNode.ParentNode);
+            var parentPath = GetXPathToNode(xmlNode.ParentNode);
             return string.Concat(parentPath, "/", xmlNode.Name);
         }
 
-        private string TokenizeValue(XmlAttribute targetAttribute, 
-                                     XmlAttribute transformAttribute, 
-                                     bool fTokenizeParameter, 
-                                     List<Dictionary<string, string>> parameters)
+        private string TokenizeValue(XmlAttribute targetAttribute, XmlAttribute transformAttribute, bool fTokenizeParameter, List<Dictionary<string, string>> parameters)
         {
             Debug.Assert(!fTokenizeParameter || parameters != null);
 
-            tokenizeValueCurrentXmlAttribute = transformAttribute;
-            string transformValue = transformAttribute.Value;
-            string xpath = GetXPathToAttribute(targetAttribute);
+            _tokenizeValueCurrentXmlAttribute = transformAttribute;
+            var transformValue = transformAttribute.Value;
+            var xpath = GetXPathToAttribute(targetAttribute);
 
             //subsitute the know value first in the transformAttribute
-            transformValue = SubstituteKownValue(transformValue, ParentAttributeRegex, "$(", delegate(string key) { return EscapeDirRegexSpecialCharacter(GetAttributeValue(key), true); });
+            transformValue = SubstituteKownValue(transformValue, ParentAttributeRegex, "$(", key => EscapeDirRegexSpecialCharacter(GetAttributeValue(key), true));
 
             // then use the directive to parse the value. --- if TokenizeParameterize is enable
-            if (fTokenizeParameter && parameters != null)
+            if (!fTokenizeParameter || parameters == null) return transformValue;
+            var strbuilder = new StringBuilder(transformValue.Length);
+            var position = 0;
+            var matchs = new List<RegularExpressions.Match>();
+
+            do
             {
-                int position = 0;
-                System.Text.StringBuilder strbuilder = new StringBuilder(transformValue.Length);
-                position = 0;
-                List<RegularExpressions.Match> matchs = new List<RegularExpressions.Match>();
-
-                do
+                position = transformValue.IndexOf("{%", position, StringComparison.OrdinalIgnoreCase);
+                if (position <= -1) continue;
+                var match = DirRegex.Match(transformValue, position);
+                // Add the successful match to collection
+                if (match.Success)
                 {
-                    position = transformValue.IndexOf("{%", position, StringComparison.OrdinalIgnoreCase);
-                    if (position > -1)
-                    {
-                        RegularExpressions.Match match = DirRegex.Match(transformValue, position);
-                        // Add the successful match to collection
-                        if (match.Success)
-                        {
-                            matchs.Add(match);
-                            position = match.Index + match.Length;
-                        }
-                        else
-                        {
-                            position++;
-                        }
-                    }
-                } while (position > -1);
-
-                if (matchs.Count > 0)
-                {
-                    strbuilder.Remove(0, strbuilder.Length);
-                    position = 0;
-                    int index = 0;
-
-                    foreach (RegularExpressions.Match match in matchs)
-                    {
-                        strbuilder.Append(transformValue.Substring(position, match.Index - position));
-                        RegularExpressions.CaptureCollection attrnames = match.Groups["attrname"].Captures;
-                        if (attrnames != null && attrnames.Count > 0)
-                        {
-                            RegularExpressions.CaptureCollection attrvalues = match.Groups["attrval"].Captures;
-                            Dictionary<string, string> paramDictionary = new Dictionary<string, string>(4, StringComparer.OrdinalIgnoreCase);
-
-                            paramDictionary[XPathWithIndex] = xpath;
-                            paramDictionary[TokenNumber] = index.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-                            // Get the key-value pare of the in the tranform form
-                            for (int i = 0; i < attrnames.Count; i++)
-                            {
-                                string name = attrnames[i].Value;
-                                string val = null;
-                                if (attrvalues != null && i < attrvalues.Count)
-                                {
-                                    val = EscapeDirRegexSpecialCharacter(attrvalues[i].Value, false);
-                                }
-                                paramDictionary[name] = val;
-                            }
-
-                            //Identify the Token format
-                            string strTokenFormat = null;
-                            if (!paramDictionary.TryGetValue(Token, out strTokenFormat))
-                            {
-                                strTokenFormat = storageDictionary.TokenFormat;
-                            }
-                            if (!string.IsNullOrEmpty(strTokenFormat))
-                            {
-                                paramDictionary[Token] = strTokenFormat;
-                            }
-
-                            // Second translation of #() -- replace with the existing Parameters
-                            int count = paramDictionary.Count;
-                            string[] keys = new string[count];
-                            paramDictionary.Keys.CopyTo(keys, 0);
-                            for (int i = 0; i < count; i++)
-                            {
-                                // if token format contain the #(),we replace with the known value such that it is unique identify
-                                // for example, intokenizeTransformXml.cs, default token format is
-                                // string.Concat("$(ReplacableToken_#(", SetTokenizedAttributes.ParameterAttribute, ")_#(", SetTokenizedAttributes.TokenNumber, "))");
-                                // which ParameterAttribute will be translate to parameterDictionary["parameter"} and TokenNumber will be translate to parameter 
-                                // parameterDictionary["TokenNumber"]
-                                string keyindex = keys[i];
-                                string val = paramDictionary[keyindex];
-                                string newVal = SubstituteKownValue(val, TokenFormatRegex, "#(",
-                                        delegate(string key) { return paramDictionary.ContainsKey(key) ? paramDictionary[key] : null; });
-
-                                paramDictionary[keyindex] = newVal;
-                            }
-
-                            if (paramDictionary.TryGetValue(Token, out strTokenFormat))
-                            {
-                                // Replace with token
-                                strbuilder.Append(strTokenFormat);
-                            }
-                            string attributeLocator;
-                            if (paramDictionary.TryGetValue(XpathLocator, out attributeLocator) && !string.IsNullOrEmpty(attributeLocator))
-                            {
-                                IList<string> locators =  XmlArgumentUtility.SplitArguments(attributeLocator);
-                                string xpathwithlocator = GetXPathToAttribute(targetAttribute,locators);
-                                if (!string.IsNullOrEmpty(xpathwithlocator))
-                                {
-                                    paramDictionary[XPathWithLocator] = xpathwithlocator;
-                                }
-                            }
-                            parameters.Add(paramDictionary);
-                        }
-
-                        position = match.Index + match.Length;
-                        index++;
-                    }
-                    strbuilder.Append(transformValue.Substring(position));
-                    transformValue = strbuilder.ToString();
+                    matchs.Add(match);
+                    position = match.Index + match.Length;
                 }
+                else
+                {
+                    position++;
+                }
+            } while (position > -1);
+
+            if (matchs.Count <= 0) return transformValue;
+
+            strbuilder.Remove(0, strbuilder.Length);
+            position = 0;
+            var index = 0;
+
+            foreach (var match in matchs)
+            {
+                strbuilder.Append(transformValue.Substring(position, match.Index - position));
+                var attrnames = match.Groups["attrname"].Captures;
+                if (attrnames != null && attrnames.Count > 0)
+                {
+                    RegularExpressions.CaptureCollection attrvalues = match.Groups["attrval"].Captures;
+                    var paramDictionary = new Dictionary<string, string>(4, StringComparer.OrdinalIgnoreCase);
+
+                    paramDictionary[XPathWithIndex] = xpath;
+                    paramDictionary[TokenNumber] = index.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                    // Get the key-value pare of the in the tranform form
+                    for (var i = 0; i < attrnames.Count; i++)
+                    {
+                        var name = attrnames[i].Value;
+                        string val = null;
+                        if (attrvalues != null && i < attrvalues.Count)
+                        {
+                            val = EscapeDirRegexSpecialCharacter(attrvalues[i].Value, false);
+                        }
+                        paramDictionary[name] = val;
+                    }
+
+                    //Identify the Token format
+                    string strTokenFormat;
+                    if (!paramDictionary.TryGetValue(Token, out strTokenFormat))
+                    {
+                        strTokenFormat = _storageDictionary.TokenFormat;
+                    }
+                    if (!string.IsNullOrEmpty(strTokenFormat))
+                    {
+                        paramDictionary[Token] = strTokenFormat;
+                    }
+
+                    // Second translation of #() -- replace with the existing Parameters
+                    var count = paramDictionary.Count;
+                    var keys = new string[count];
+                    paramDictionary.Keys.CopyTo(keys, 0);
+                    for (var i = 0; i < count; i++)
+                    {
+                        // if token format contain the #(),we replace with the known value such that it is unique identify
+                        // for example, intokenizeTransformXml.cs, default token format is
+                        // string.Concat("$(ReplacableToken_#(", SetTokenizedAttributes.ParameterAttribute, ")_#(", SetTokenizedAttributes.TokenNumber, "))");
+                        // which ParameterAttribute will be translate to parameterDictionary["parameter"} and TokenNumber will be translate to parameter 
+                        // parameterDictionary["TokenNumber"]
+                        string keyindex = keys[i];
+                        string val = paramDictionary[keyindex];
+                        string newVal = SubstituteKownValue(val, TokenFormatRegex, "#(", key => paramDictionary.ContainsKey(key) ? paramDictionary[key] : null);
+
+                        paramDictionary[keyindex] = newVal;
+                    }
+
+                    if (paramDictionary.TryGetValue(Token, out strTokenFormat))
+                    {
+                        // Replace with token
+                        strbuilder.Append(strTokenFormat);
+                    }
+                    string attributeLocator;
+                    if (paramDictionary.TryGetValue(XpathLocator, out attributeLocator) && !string.IsNullOrEmpty(attributeLocator))
+                    {
+                        var locators =  XmlArgumentUtility.SplitArguments(attributeLocator);
+                        var xpathwithlocator = GetXPathToAttribute(targetAttribute,locators);
+                        if (!string.IsNullOrEmpty(xpathwithlocator))
+                        {
+                            paramDictionary[XPathWithLocator] = xpathwithlocator;
+                        }
+                    }
+                    parameters.Add(paramDictionary);
+                }
+
+                position = match.Index + match.Length;
+                index++;
             }
+            strbuilder.Append(transformValue.Substring(position));
+            transformValue = strbuilder.ToString();
             return transformValue;
         }
 

@@ -12,23 +12,24 @@ namespace Microsoft.Web.XmlTransform
         internal static readonly string SupressWarnings = "SupressWarnings";
 
         #region private data members
-        private string transformFile;
+        private readonly string _transformFile;
 
-        private XmlDocument xmlTransformation;
-        private XmlDocument xmlTarget;
-        private XmlTransformableDocument xmlTransformable;
+        private XmlDocument _xmlTransformation;
+        private XmlDocument _xmlTarget;
+        private XmlTransformableDocument _xmlTransformable;
 
-        private XmlTransformationLogger logger = null;
+        private readonly XmlTransformationLogger _logger;
 
-        private NamedTypeFactory namedTypeFactory;
-        private ServiceContainer transformationServiceContainer = new ServiceContainer();
-        private ServiceContainer documentServiceContainer = null;
+        private NamedTypeFactory _namedTypeFactory;
+        private ServiceContainer _transformationServiceContainer = new ServiceContainer();
+        private ServiceContainer _documentServiceContainer;
 
-        private bool hasTransformNamespace = false;
+        private bool _hasTransformNamespace;
         #endregion
 
         public XmlTransformation(string transformFile)
-            : this(transformFile, true,  null) {
+            : this(transformFile, true, null)
+        {
         }
 
         public XmlTransformation(string transform, IXmlTransformationLogger logger)
@@ -36,19 +37,16 @@ namespace Microsoft.Web.XmlTransform
         {
         }
 
-        public XmlTransformation(string transform, bool isTransformAFile, IXmlTransformationLogger logger) {
-            this.transformFile = transform;
-            this.logger = new XmlTransformationLogger(logger);
+        public XmlTransformation(string transform, bool isTransformAFile, IXmlTransformationLogger logger)
+        {
+            _transformFile = transform;
+            _logger = new XmlTransformationLogger(logger);
 
-            xmlTransformation = new XmlFileInfoDocument();
+            _xmlTransformation = new XmlFileInfoDocument();
             if (isTransformAFile)
-            {
-                xmlTransformation.Load(transform);
-            }
+                _xmlTransformation.Load(transform);
             else
-            {
-                xmlTransformation.LoadXml(transform);
-            }
+                _xmlTransformation.LoadXml(transform);
 
             InitializeTransformationServices();
 
@@ -57,11 +55,11 @@ namespace Microsoft.Web.XmlTransform
 
         public XmlTransformation(Stream transformStream, IXmlTransformationLogger logger)
         {
-            this.logger = new XmlTransformationLogger(logger);
-            this.transformFile = String.Empty;
+            _logger = new XmlTransformationLogger(logger);
+            _transformFile = String.Empty;
 
-            xmlTransformation = new XmlFileInfoDocument();
-            xmlTransformation.Load(transformStream);
+            _xmlTransformation = new XmlFileInfoDocument();
+            _xmlTransformation.Load(transformStream);
 
             InitializeTransformationServices();
 
@@ -72,180 +70,205 @@ namespace Microsoft.Web.XmlTransform
         {
             get
             {
-                return hasTransformNamespace;
+                return _hasTransformNamespace;
             }
         }
 
-        private void InitializeTransformationServices() {
+        private void InitializeTransformationServices()
+        {
             // Initialize NamedTypeFactory
-            namedTypeFactory = new NamedTypeFactory(transformFile);
-            transformationServiceContainer.AddService(namedTypeFactory.GetType(), namedTypeFactory);
+            _namedTypeFactory = new NamedTypeFactory(_transformFile);
+            _transformationServiceContainer.AddService(_namedTypeFactory.GetType(), _namedTypeFactory);
 
             // Initialize TransformationLogger
-            transformationServiceContainer.AddService(logger.GetType(), logger);
+            _transformationServiceContainer.AddService(_logger.GetType(), _logger);
         }
 
-        private void InitializeDocumentServices(XmlDocument document) {
-            Debug.Assert(documentServiceContainer == null);
-            documentServiceContainer = new ServiceContainer();
-
-            if (document is IXmlOriginalDocumentService) {
-                documentServiceContainer.AddService(typeof(IXmlOriginalDocumentService), document);
-            }
-        }
-
-        private void ReleaseDocumentServices() {
-            if (documentServiceContainer != null) {
-                documentServiceContainer.RemoveService(typeof(IXmlOriginalDocumentService));
-                documentServiceContainer = null;
-            }
-        }
-
-        private void PreprocessTransformDocument() {
-            hasTransformNamespace = false;
-            foreach (XmlAttribute attribute in xmlTransformation.SelectNodes("//namespace::*")) {
-                if (attribute.Value.Equals(TransformNamespace, StringComparison.Ordinal)) {
-                    hasTransformNamespace = true;
-                    break;
-                }
-            }
-
-            if (hasTransformNamespace) {
-                // This will look for all nodes from our namespace in the document,
-                // and do any initialization work
-                XmlNamespaceManager namespaceManager = new XmlNamespaceManager(new NameTable());
-                namespaceManager.AddNamespace("xdt", TransformNamespace);
-                XmlNodeList namespaceNodes = xmlTransformation.SelectNodes("//xdt:*", namespaceManager);
-
-                foreach (XmlNode node in namespaceNodes) {
-                    XmlElement element = node as XmlElement;
-                    if (element == null) {
-                        Debug.Fail("The XPath for elements returned something that wasn't an element?");
-                        continue;
-                    }
-
-                    XmlElementContext context = null;
-                    try {
-                        switch (element.LocalName) {
-                            case "Import":
-                                context = CreateElementContext(null, element);
-                                PreprocessImportElement(context);
-                                break;
-                            default:
-                                logger.LogWarning(element, SR.XMLTRANSFORMATION_UnknownXdtTag, element.Name);
-                                break;
-                        }
-                    }
-                    catch (Exception ex) {
-                        if (context != null) {
-                            ex = WrapException(ex, context);
-                        }
-
-                        logger.LogErrorFromException(ex);
-                        throw new XmlTransformationException(SR.XMLTRANSFORMATION_FatalTransformSyntaxError, ex);
-                    }
-                    finally {
-                        context = null;
-                    }
-                }
-            }
-        }
-
-        public void AddTransformationService(System.Type serviceType, object serviceInstance)
+        private void InitializeDocumentServices(XmlDocument document)
         {
-            transformationServiceContainer.AddService(serviceType, serviceInstance);
+            Debug.Assert(_documentServiceContainer == null);
+            _documentServiceContainer = new ServiceContainer();
+
+            if (document is IXmlOriginalDocumentService)
+            {
+                _documentServiceContainer.AddService(typeof(IXmlOriginalDocumentService), document);
+            }
         }
 
-        public void RemoveTransformationService(System.Type serviceType)
+        private void ReleaseDocumentServices()
         {
-            transformationServiceContainer.RemoveService(serviceType);
+            if (_documentServiceContainer == null) return;
+            _documentServiceContainer.RemoveService(typeof(IXmlOriginalDocumentService));
+            _documentServiceContainer = null;
         }
 
-        public bool Apply(XmlDocument xmlTarget) {
-            Debug.Assert(this.xmlTarget == null, "This method should not be called recursively");
-
-            if (this.xmlTarget == null) {
-                // Reset the error state
-                logger.HasLoggedErrors = false;
-
-                this.xmlTarget = xmlTarget;
-                this.xmlTransformable = xmlTarget as XmlTransformableDocument;
-                try {
-                    if (hasTransformNamespace) {
-                        InitializeDocumentServices(xmlTarget);
-
-                        TransformLoop(xmlTransformation);
-                    }
-                    else {
-                        logger.LogMessage(MessageType.Normal, "The expected namespace {0} was not found in the transform file", TransformNamespace);
-                    }
-                }
-                catch (Exception ex) {
-                    HandleException(ex);
-                }
-                finally {
-                    ReleaseDocumentServices();
-
-                    this.xmlTarget = null;
-                    this.xmlTransformable = null;
-                }
-
-                return !logger.HasLoggedErrors;
+        private void PreprocessTransformDocument()
+        {
+            _hasTransformNamespace = false;
+            foreach (XmlAttribute attribute in _xmlTransformation.SelectNodes("//namespace::*"))
+            {
+                if (!attribute.Value.Equals(TransformNamespace, StringComparison.Ordinal)) continue;
+                _hasTransformNamespace = true;
+                break;
             }
-            else {
-                return false;
-            }
-        }
 
-        private void TransformLoop(XmlDocument xmlSource) {
-            TransformLoop(new XmlNodeContext(xmlSource));
-        }
+            if (!_hasTransformNamespace) return;
+            // This will look for all nodes from our namespace in the document,
+            // and do any initialization work
+            var namespaceManager = new XmlNamespaceManager(new NameTable());
+            namespaceManager.AddNamespace("xdt", TransformNamespace);
+            var namespaceNodes = _xmlTransformation.SelectNodes("//xdt:*", namespaceManager);
 
-        private void TransformLoop(XmlNodeContext parentContext) {
-            foreach (XmlNode node in parentContext.Node.ChildNodes) {
-                XmlElement element = node as XmlElement;
-                if (element == null) {
+            foreach (XmlNode node in namespaceNodes)
+            {
+                var element = node as XmlElement;
+                if (element == null)
+                {
+                    Debug.Fail("The XPath for elements returned something that wasn't an element?");
                     continue;
                 }
 
-                XmlElementContext context = CreateElementContext(parentContext as XmlElementContext, element);
-                try {
+                XmlElementContext context = null;
+                try
+                {
+                    switch (element.LocalName)
+                    {
+                        case "Import":
+                            context = CreateElementContext(null, element);
+                            PreprocessImportElement(context);
+                            break;
+                        default:
+                            _logger.LogWarning(element, SR.XMLTRANSFORMATION_UnknownXdtTag, element.Name);
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (context != null)
+                    {
+                        ex = WrapException(ex, context);
+                    }
+
+                    _logger.LogErrorFromException(ex);
+                    throw new XmlTransformationException(SR.XMLTRANSFORMATION_FatalTransformSyntaxError, ex);
+                }
+                finally
+                {
+                    context = null;
+                }
+            }
+        }
+
+        public void AddTransformationService(Type serviceType, object serviceInstance)
+        {
+            _transformationServiceContainer.AddService(serviceType, serviceInstance);
+        }
+
+        public void RemoveTransformationService(Type serviceType)
+        {
+            _transformationServiceContainer.RemoveService(serviceType);
+        }
+
+        public bool Apply(XmlDocument xmlTarget)
+        {
+            Debug.Assert(_xmlTarget == null, "This method should not be called recursively");
+
+            if (_xmlTarget != null) return false;
+
+            // Reset the error state
+            _logger.HasLoggedErrors = false;
+
+            _xmlTarget = xmlTarget;
+            _xmlTransformable = xmlTarget as XmlTransformableDocument;
+            try
+            {
+                if (_hasTransformNamespace)
+                {
+                    InitializeDocumentServices(xmlTarget);
+
+                    TransformLoop(_xmlTransformation);
+                }
+                else
+                {
+                    _logger.LogMessage(MessageType.Normal, "The expected namespace {0} was not found in the transform file", TransformNamespace);
+                }
+            }
+            catch (Exception ex)
+            {
+                HandleException(ex);
+            }
+            finally
+            {
+                ReleaseDocumentServices();
+
+                _xmlTarget = null;
+                _xmlTransformable = null;
+            }
+
+            return !_logger.HasLoggedErrors;
+        }
+
+        private void TransformLoop(XmlDocument xmlSource)
+        {
+            TransformLoop(new XmlNodeContext(xmlSource));
+        }
+
+        private void TransformLoop(XmlNodeContext parentContext)
+        {
+            foreach (XmlNode node in parentContext.Node.ChildNodes)
+            {
+                var element = node as XmlElement;
+                if (element == null)
+                {
+                    continue;
+                }
+
+                var context = CreateElementContext(parentContext as XmlElementContext, element);
+                try
+                {
                     HandleElement(context);
                 }
-                catch (Exception ex) {
+                catch (Exception ex)
+                {
                     HandleException(ex, context);
                 }
             }
         }
 
-        private XmlElementContext CreateElementContext(XmlElementContext parentContext, XmlElement element) {
-            return new XmlElementContext(parentContext, element, xmlTarget, this);
+        private XmlElementContext CreateElementContext(XmlElementContext parentContext, XmlElement element)
+        {
+            return new XmlElementContext(parentContext, element, _xmlTarget, this);
         }
 
-        private void HandleException(Exception ex) {
-            logger.LogErrorFromException(ex);
+        private void HandleException(Exception ex)
+        {
+            _logger.LogErrorFromException(ex);
         }
 
-        private void HandleException(Exception ex, XmlNodeContext context) {
+        private void HandleException(Exception ex, XmlNodeContext context)
+        {
             HandleException(WrapException(ex, context));
         }
 
-        private Exception WrapException(Exception ex, XmlNodeContext context) {
+        private Exception WrapException(Exception ex, XmlNodeContext context)
+        {
             return XmlNodeException.Wrap(ex, context.Node);
         }
 
-        private void HandleElement(XmlElementContext context) {
+        private void HandleElement(XmlElementContext context)
+        {
             string argumentString;
-            Transform transform = context.ConstructTransform(out argumentString);
-            if (transform != null) {
+            var transform = context.ConstructTransform(out argumentString);
+            if (transform != null)
+            {
 
-                bool fOriginalSupressWarning = logger.SupressWarnings;
+                var fOriginalSupressWarning = _logger.SupressWarnings;
 
-                XmlAttribute SupressWarningsAttribute = context.Element.Attributes.GetNamedItem(XmlTransformation.SupressWarnings, XmlTransformation.TransformNamespace) as XmlAttribute;
-                if (SupressWarningsAttribute != null)
+                var supressWarningsAttribute = context.Element.Attributes.GetNamedItem(SupressWarnings, TransformNamespace) as XmlAttribute;
+                if (supressWarningsAttribute != null)
                 {
-                    bool fSupressWarning = System.Convert.ToBoolean(SupressWarningsAttribute.Value, System.Globalization.CultureInfo.InvariantCulture);
-                    logger.SupressWarnings = fSupressWarning;
+                    var fSupressWarning = Convert.ToBoolean(supressWarningsAttribute.Value, System.Globalization.CultureInfo.InvariantCulture);
+                    _logger.SupressWarnings = fSupressWarning;
                 }
 
                 try
@@ -263,7 +286,7 @@ namespace Microsoft.Web.XmlTransform
                 finally
                 {
                     // reset back the SupressWarnings back per node
-                    logger.SupressWarnings = fOriginalSupressWarning;
+                    _logger.SupressWarnings = fOriginalSupressWarning;
                 }
             }
 
@@ -271,71 +294,73 @@ namespace Microsoft.Web.XmlTransform
             TransformLoop(context);
         }
 
-        private void OnApplyingTransform() {
-            if (xmlTransformable != null) {
-                xmlTransformable.OnBeforeChange();
-            }
+        private void OnApplyingTransform()
+        {
+            if (_xmlTransformable != null)
+                _xmlTransformable.OnBeforeChange();
         }
 
-        private void OnAppliedTransform() {
-            if (xmlTransformable != null) {
-                xmlTransformable.OnAfterChange();
-            }
+        private void OnAppliedTransform()
+        {
+            if (_xmlTransformable != null)
+                _xmlTransformable.OnAfterChange();
         }
 
-        private void PreprocessImportElement(XmlElementContext context) {
+        private void PreprocessImportElement(XmlElementContext context)
+        {
             string assemblyName = null;
             string nameSpace = null;
             string path = null;
 
-            foreach (XmlAttribute attribute in context.Element.Attributes) {
-                if (attribute.NamespaceURI.Length == 0) {
-                    switch (attribute.Name) {
-                        case "assembly":
-                            assemblyName = attribute.Value;
-                            continue;
-                        case "namespace":
-                            nameSpace = attribute.Value;
-                            continue;
-                        case "path":
-                            path = attribute.Value;
-                            continue;
-                    }
+            foreach (XmlAttribute attribute in context.Element.Attributes)
+            {
+                if (attribute.NamespaceURI.Length != 0)
+                    throw new XmlNodeException(string.Format(System.Globalization.CultureInfo.CurrentCulture, SR.XMLTRANSFORMATION_ImportUnknownAttribute, attribute.Name), attribute);
+                switch (attribute.Name)
+                {
+                    case "assembly":
+                        assemblyName = attribute.Value;
+                        continue;
+                    case "namespace":
+                        nameSpace = attribute.Value;
+                        continue;
+                    case "path":
+                        path = attribute.Value;
+                        continue;
                 }
 
-                throw new XmlNodeException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_ImportUnknownAttribute, attribute.Name), attribute);
+                throw new XmlNodeException(string.Format(System.Globalization.CultureInfo.CurrentCulture, SR.XMLTRANSFORMATION_ImportUnknownAttribute, attribute.Name), attribute);
             }
 
-            if (assemblyName != null && path != null) {
-                throw new XmlNodeException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_ImportAttributeConflict), context.Element);
+            if (assemblyName != null && path != null)
+            {
+                throw new XmlNodeException(string.Format(System.Globalization.CultureInfo.CurrentCulture, SR.XMLTRANSFORMATION_ImportAttributeConflict), context.Element);
             }
-            else if (assemblyName == null && path == null) {
-                throw new XmlNodeException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_ImportMissingAssembly), context.Element);
+            if (assemblyName == null && path == null)
+            {
+                throw new XmlNodeException(string.Format(System.Globalization.CultureInfo.CurrentCulture, SR.XMLTRANSFORMATION_ImportMissingAssembly), context.Element);
             }
-            else if (nameSpace == null) {
-                throw new XmlNodeException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_ImportMissingNamespace), context.Element);
+            if (nameSpace == null)
+            {
+                throw new XmlNodeException(string.Format(System.Globalization.CultureInfo.CurrentCulture, SR.XMLTRANSFORMATION_ImportMissingNamespace), context.Element);
             }
-            else {
-                if (assemblyName != null) {
-                    namedTypeFactory.AddAssemblyRegistration(assemblyName, nameSpace);
-                }
-                else {
-                    namedTypeFactory.AddPathRegistration(path, nameSpace);
-                }
+            if (assemblyName != null)
+            {
+                _namedTypeFactory.AddAssemblyRegistration(assemblyName, nameSpace);
+            }
+            else
+            {
+                _namedTypeFactory.AddPathRegistration(path, nameSpace);
             }
         }
 
         #region IServiceProvider Members
 
-        public object GetService(Type serviceType) {
-            object service = null;
-            if (documentServiceContainer != null) {
-                service = documentServiceContainer.GetService(serviceType);
-            }
-            if (service == null) {
-                service = transformationServiceContainer.GetService(serviceType);
-            }
-            return service;
+        public object GetService(Type serviceType)
+        {
+            if (_documentServiceContainer == null)
+                return (_transformationServiceContainer.GetService(serviceType));
+            return _documentServiceContainer.GetService(serviceType) ?? (_transformationServiceContainer.GetService(serviceType));
         }
 
         #endregion
@@ -343,35 +368,35 @@ namespace Microsoft.Web.XmlTransform
         #region Dispose Pattern
         protected virtual void Dispose(bool disposing)
         {
-            if (transformationServiceContainer != null)
+            if (_transformationServiceContainer != null)
             {
-                transformationServiceContainer.Dispose();
-                transformationServiceContainer = null;
+                _transformationServiceContainer.Dispose();
+                _transformationServiceContainer = null;
             }
 
-            if (documentServiceContainer != null)
+            if (_documentServiceContainer != null)
             {
-                documentServiceContainer.Dispose();
-                documentServiceContainer = null;
+                _documentServiceContainer.Dispose();
+                _documentServiceContainer = null;
             }
 
-            if (xmlTransformable!= null)
+            if (_xmlTransformable != null)
             {
-                xmlTransformable.Dispose();
-                xmlTransformable = null;
+                _xmlTransformable.Dispose();
+                _xmlTransformable = null;
             }
 
-            if (xmlTransformation as XmlFileInfoDocument != null)
+            if (_xmlTransformation as XmlFileInfoDocument != null)
             {
-                (xmlTransformation as XmlFileInfoDocument).Dispose();
-                xmlTransformation = null;
+                (_xmlTransformation as XmlFileInfoDocument).Dispose();
+                _xmlTransformation = null;
             }
         }
 
         public void Dispose()
         {
             Dispose(true);
-            GC.SuppressFinalize(this);        
+            GC.SuppressFinalize(this);
         }
 
         ~XmlTransformation()

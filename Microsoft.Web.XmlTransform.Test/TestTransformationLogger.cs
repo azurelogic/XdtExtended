@@ -1,30 +1,27 @@
 using System;
 using System.Diagnostics;
 using System.Text;
-using Microsoft.Web.XmlTransform;
 
 namespace Microsoft.Web.XmlTransform.Test
 {
     internal class TestTransformationLogger : IXmlTransformationLogger
     {
-        private int indentLevel = 0;
-        private readonly string indentStringPiece = "  ";
-        private string indentString = null;
-        private StringBuilder _log = new StringBuilder();
+        private int _indentLevel;
+        private const string indentStringPiece = "  ";
+        private string _indentString;
+        private readonly StringBuilder _log = new StringBuilder();
 
         private string IndentString
         {
             get
             {
-                if (indentString == null)
+                if (_indentString != null) return _indentString;
+                _indentString = String.Empty;
+                for (var i = 0; i < _indentLevel; i++)
                 {
-                    indentString = String.Empty;
-                    for (int i = 0; i < indentLevel; i++)
-                    {
-                        indentString += indentStringPiece;
-                    }
+                    _indentString += indentStringPiece;
                 }
-                return indentString;
+                return _indentString;
             }
         }
 
@@ -32,15 +29,13 @@ namespace Microsoft.Web.XmlTransform.Test
         {
             get
             {
-                return indentLevel;
+                return _indentLevel;
             }
             set
             {
-                if (indentLevel != value)
-                {
-                    indentLevel = value;
-                    indentString = null;
-                }
+                if (_indentLevel == value) return;
+                _indentLevel = value;
+                _indentString = null;
             }
         }
 
@@ -64,7 +59,7 @@ namespace Microsoft.Web.XmlTransform.Test
 
         public void LogWarning(string message, params object[] messageArgs)
         {
-            LogWarning(message, messageArgs);
+            LogWarning("", message, messageArgs);
         }
 
         public void LogWarning(string file, string message, params object[] messageArgs)
@@ -75,13 +70,13 @@ namespace Microsoft.Web.XmlTransform.Test
         public void LogWarning(string file, int lineNumber, int linePosition, string message, params object[] messageArgs)
         {
             // we will format like: transform.xml (30, 10) warning: Argument 'snap' did not match any attributes
-            string format = "{0} ({1}, {2}) warning: {3}";
+            const string format = "{0} ({1}, {2}) warning: {3}";
             _log.AppendLine(string.Format(format, System.IO.Path.GetFileName(file), lineNumber, linePosition, string.Format(message,messageArgs)));
         }
 
         public void LogError(string message, params object[] messageArgs)
         {
-            LogError(message, messageArgs);
+            LogError("", message, messageArgs);
         }
 
         public void LogError(string file, string message, params object[] messageArgs)
@@ -92,7 +87,7 @@ namespace Microsoft.Web.XmlTransform.Test
         public void LogError(string file, int lineNumber, int linePosition, string message, params object[] messageArgs)
         {
             //transform.xml(33, 10) error: Could not resolve 'ThrowException' as a type of Transform
-            string format = "{0} ({1}, {2}) error: {3}";
+            const string format = "{0} ({1}, {2}) error: {3}";
             _log.AppendLine(string.Format(format, System.IO.Path.GetFileName(file), lineNumber, linePosition, string.Format(message,messageArgs)));
         }
 
@@ -102,7 +97,7 @@ namespace Microsoft.Web.XmlTransform.Test
 
         public void LogErrorFromException(Exception ex, string file, int lineNumber, int linePosition) 
         {
-            string message = ex.Message;
+            var message = ex.Message;
             LogError(file, lineNumber, linePosition, message);
         }
 

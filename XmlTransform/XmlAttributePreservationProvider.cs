@@ -1,40 +1,44 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using System.Diagnostics;
-using System.Xml;
 
 namespace Microsoft.Web.XmlTransform
 {
     internal class XmlAttributePreservationProvider : IDisposable
     {
-        private StreamReader streamReader;
-        private PositionTrackingTextReader reader;
+        private StreamReader _streamReader;
+        private PositionTrackingTextReader _reader;
 
-        public XmlAttributePreservationProvider(string fileName) {
-            streamReader = new StreamReader(File.OpenRead(fileName));
-            reader = new PositionTrackingTextReader(streamReader);
+        public XmlAttributePreservationProvider(string fileName)
+        {
+            _streamReader = new StreamReader(File.OpenRead(fileName));
+            _reader = new PositionTrackingTextReader(_streamReader);
         }
 
-        public XmlAttributePreservationDict GetDictAtPosition(int lineNumber, int linePosition) {
-            if (reader.ReadToPosition(lineNumber, linePosition)) {
-                Debug.Assert((char)reader.Peek() == '<');
+        public XmlAttributePreservationDict GetDictAtPosition(int lineNumber, int linePosition)
+        {
+            if (_reader.ReadToPosition(lineNumber, linePosition))
+            {
+                Debug.Assert((char)_reader.Peek() == '<');
 
-                StringBuilder sb = new StringBuilder();
+                var sb = new StringBuilder();
                 int character;
-                bool inAttribute = false;
-                do {
-                    character = reader.Read();
-                    if (character == '\"'){
+                var inAttribute = false;
+                do
+                {
+                    character = _reader.Read();
+                    if (character == '\"')
+                    {
                         inAttribute = !inAttribute;
                     }
                     sb.Append((char)character);
                 }
                 while (character > 0 && ((char)character != '>' || inAttribute));
 
-                if (character > 0) {
-                    XmlAttributePreservationDict dict = new XmlAttributePreservationDict();
+                if (character > 0)
+                {
+                    var dict = new XmlAttributePreservationDict();
                     dict.ReadPreservationInfo(sb.ToString());
                     return dict;
                 }
@@ -52,16 +56,14 @@ namespace Microsoft.Web.XmlTransform
 
         public void Dispose()
         {
-            if (streamReader != null)
+            if (_streamReader != null)
             {
-                streamReader.Close();
-                streamReader = null;
+                _streamReader.Close();
+                _streamReader = null;
             }
-            if (reader != null)
-            {
-                reader.Dispose();
-                reader = null;
-            }
+            if (_reader == null) return;
+            _reader.Dispose();
+            _reader = null;
         }
 
         ~XmlAttributePreservationProvider()

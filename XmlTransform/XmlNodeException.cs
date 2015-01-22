@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Security.Permissions;
-using System.Text;
 using System.Xml;
 
 namespace Microsoft.Web.XmlTransform
@@ -10,53 +8,57 @@ namespace Microsoft.Web.XmlTransform
     [Serializable]
     public sealed class XmlNodeException : XmlTransformationException
     {
-        private XmlFileInfoDocument document;
-        private IXmlLineInfo lineInfo;
+        private readonly XmlFileInfoDocument _document;
+        private readonly IXmlLineInfo _lineInfo;
 
-        public static Exception Wrap(Exception ex, XmlNode node) {
-            if (ex is XmlNodeException) {
-                // If this is already an XmlNodeException, then it probably
-                // got its node closer to the error, making it more accurate
-                return ex;
-            }
-            else {
-                return new XmlNodeException(ex, node);
-            }
+        public static Exception Wrap(Exception ex, XmlNode node)
+        {
+            return ex is XmlNodeException ? ex : new XmlNodeException(ex, node);
         }
 
         public XmlNodeException(Exception innerException, XmlNode node)
-            : base(innerException.Message, innerException) {
-            this.lineInfo = node as IXmlLineInfo;
-            this.document = node.OwnerDocument as XmlFileInfoDocument;
+            : base(innerException.Message, innerException)
+        {
+            _lineInfo = node as IXmlLineInfo;
+            _document = node.OwnerDocument as XmlFileInfoDocument;
         }
 
         public XmlNodeException(string message, XmlNode node)
-            : base(message) {
-            this.lineInfo = node as IXmlLineInfo;
-            this.document = node.OwnerDocument as XmlFileInfoDocument;
+            : base(message)
+        {
+            _lineInfo = node as IXmlLineInfo;
+            _document = node.OwnerDocument as XmlFileInfoDocument;
         }
 
-        public bool HasErrorInfo {
-            get {
-                return lineInfo != null;
+        public bool HasErrorInfo
+        {
+            get
+            {
+                return _lineInfo != null;
             }
         }
 
-        public string FileName {
-            get {
-                return document != null ? document.FileName : null;
+        public string FileName
+        {
+            get
+            {
+                return _document != null ? _document.FileName : null;
             }
         }
 
-        public int LineNumber {
-            get {
-                return lineInfo != null ? lineInfo.LineNumber : 0;
+        public int LineNumber
+        {
+            get
+            {
+                return _lineInfo != null ? _lineInfo.LineNumber : 0;
             }
         }
 
-        public int LinePosition {
-            get {
-                return lineInfo != null ? lineInfo.LinePosition : 0;
+        public int LinePosition
+        {
+            get
+            {
+                return _lineInfo != null ? _lineInfo.LinePosition : 0;
             }
         }
 
@@ -65,8 +67,8 @@ namespace Microsoft.Web.XmlTransform
         {
             base.GetObjectData(info, context);
 
-            info.AddValue("document", document);
-            info.AddValue("lineInfo", lineInfo);
+            info.AddValue("document", _document);
+            info.AddValue("lineInfo", _lineInfo);
         }
     }
 }

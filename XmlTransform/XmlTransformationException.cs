@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Microsoft.Web.XmlTransform
 {
@@ -10,11 +8,13 @@ namespace Microsoft.Web.XmlTransform
     public class XmlTransformationException : Exception
     {
         public XmlTransformationException(string message)
-            : base(message) {
+            : base(message)
+        {
         }
 
         public XmlTransformationException(string message, Exception innerException)
-            : base(message, innerException) {
+            : base(message, innerException)
+        {
         }
     }
 }

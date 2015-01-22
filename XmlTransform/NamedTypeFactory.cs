@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Reflection;
 using System.IO;
 
@@ -8,11 +7,11 @@ namespace Microsoft.Web.XmlTransform
 {
     internal class NamedTypeFactory
     {
-        private string relativePathRoot;
-        private List<Registration> registrations = new List<Registration>();
+        private readonly string _relativePathRoot;
+        private readonly List<Registration> _registrations = new List<Registration>();
 
         internal NamedTypeFactory(string relativePathRoot) {
-            this.relativePathRoot = relativePathRoot;
+            _relativePathRoot = relativePathRoot;
 
             CreateDefaultRegistrations();
         }
@@ -22,58 +21,49 @@ namespace Microsoft.Web.XmlTransform
         }
 
         internal void AddAssemblyRegistration(Assembly assembly, string nameSpace) {
-            registrations.Add(new Registration(assembly, nameSpace));
+            _registrations.Add(new Registration(assembly, nameSpace));
         }
 
         internal void AddAssemblyRegistration(string assemblyName, string nameSpace) {
-            registrations.Add(new AssemblyNameRegistration(assemblyName, nameSpace));
+            _registrations.Add(new AssemblyNameRegistration(assemblyName, nameSpace));
         }
 
         internal void AddPathRegistration(string path, string nameSpace) {
             if (!Path.IsPathRooted(path)) {
                 // Resolve a relative path
-                path = Path.Combine(Path.GetDirectoryName(relativePathRoot), path);
+                path = Path.Combine(Path.GetDirectoryName(_relativePathRoot), path);
             }
 
-            registrations.Add(new PathRegistration(path, nameSpace));
+            _registrations.Add(new PathRegistration(path, nameSpace));
         }
 
-        internal ObjectType Construct<ObjectType>(string typeName) where ObjectType : class {
-            if (!String.IsNullOrEmpty(typeName)) {
-                Type type = GetType(typeName);
-                if (type == null) {
-                    throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_UnknownTypeName, typeName, typeof(ObjectType).Name));
-                }
-                else if (!type.IsSubclassOf(typeof(ObjectType))) {
-                    throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_IncorrectBaseType, type.FullName, typeof(ObjectType).Name));
-                }
-                else {
-                    ConstructorInfo constructor = type.GetConstructor(Type.EmptyTypes);
-                    if (constructor == null) {
-                        throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_NoValidConstructor, type.FullName));
-                    }
-                    else {
-                        return constructor.Invoke(new object[] { }) as ObjectType;
-                    }
-                }
+        internal TObjectType Construct<TObjectType>(string typeName) where TObjectType : class {
+            if (String.IsNullOrEmpty(typeName)) return null;
+            var type = GetType(typeName);
+            if (type == null) {
+                throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_UnknownTypeName, typeName, typeof(TObjectType).Name));
             }
-
-            return null;
+            if (!type.IsSubclassOf(typeof(TObjectType))) {
+                throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_IncorrectBaseType, type.FullName, typeof(TObjectType).Name));
+            }
+            var constructor = type.GetConstructor(Type.EmptyTypes);
+            if (constructor == null) {
+                throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_NoValidConstructor, type.FullName));
+            }
+            return constructor.Invoke(new object[] { }) as TObjectType;
         }
 
         private Type GetType(string typeName) {
             Type foundType = null;
-            foreach (Registration registration in registrations) {
-                if (registration.IsValid) {
-                    Type regType = registration.Assembly.GetType(String.Concat(registration.NameSpace, ".", typeName));
-                    if (regType != null) {
-                        if (foundType == null) {
-                            foundType = regType;
-                        }
-                        else {
-                            throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_AmbiguousTypeMatch, typeName));
-                        }
-                    }
+            foreach (var registration in _registrations) {
+                if (!registration.IsValid) continue;
+                var regType = registration.Assembly.GetType(String.Concat(registration.NameSpace, ".", typeName));
+                if (regType == null) continue;
+                if (foundType == null) {
+                    foundType = regType;
+                }
+                else {
+                    throw new XmlTransformationException(string.Format(System.Globalization.CultureInfo.CurrentCulture,SR.XMLTRANSFORMATION_AmbiguousTypeMatch, typeName));
                 }
             }
             return foundType;
@@ -81,29 +71,29 @@ namespace Microsoft.Web.XmlTransform
 
         private class Registration
         {
-            private Assembly assembly = null;
-            private string nameSpace;
+            private readonly Assembly _assembly;
+            private readonly string _nameSpace;
 
             public Registration(Assembly assembly, string nameSpace) {
-                this.assembly = assembly;
-                this.nameSpace = nameSpace;
+                _assembly = assembly;
+                _nameSpace = nameSpace;
             }
 
             public bool IsValid {
                 get {
-                    return assembly != null;
+                    return _assembly != null;
                 }
             }
 
             public string NameSpace {
                 get {
-                    return nameSpace;
+                    return _nameSpace;
                 }
             }
 
             public Assembly Assembly {
                 get {
-                    return assembly;
+                    return _assembly;
                 }
             }
         }
