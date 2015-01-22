@@ -60,6 +60,11 @@ Result:
   </item>
 </list>
 ```
+###Other Documentation Resources and Features to Add
+https://github.com/projectkudu/kudu/wiki/Xdt-transform-samples
+http://sedodream.com/2010/09/09/ExtendingXMLWebconfigConfigTransformation.aspx
+http://stackoverflow.com/a/3674169/2836187
+https://github.com/sayedihashimi/XdtSample/blob/master/Program.cs
 
 ##License
 Apache License 2.0
