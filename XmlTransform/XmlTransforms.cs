@@ -38,6 +38,26 @@ namespace Microsoft.Web.XmlTransform.Extended
         }
     }
 
+    internal class ReplaceAll : Transform
+    {
+        public ReplaceAll()
+        {
+            ApplyTransformToAllTargetNodes = true;            
+        }
+
+        protected override void Apply()
+        {
+            CommonErrors.ExpectNoArguments(Log, TransformNameShort, ArgumentString);
+
+            var parentNode = TargetNode.ParentNode;
+            parentNode.ReplaceChild(
+                TransformNode,
+                TargetNode);
+
+            Log.LogMessage(MessageType.Verbose, SR.XMLTRANSFORMATION_TransformMessageReplace, TargetNode.Name);
+        }
+    }
+
 
     internal class Remove : Transform
     {
