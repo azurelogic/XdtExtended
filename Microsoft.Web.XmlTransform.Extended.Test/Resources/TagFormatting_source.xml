@@ -46,5 +46,12 @@
     <item/>
   </list>
 
+  <!-- Children of this collection element with value 'Zero' should have value set to '0' -->
+  <list2>
+    <item>Zero</item>
+    <item>Zero</item>
+    <item>One</item>
+  </list2>
+
   <!-- A new appSettings section will be added below here -->
 </configuration>

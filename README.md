@@ -60,6 +60,31 @@ Result:
   </item>
 </list>
 ```
+#### xdt:Transform="ReplaceAll"
+Replaces the selected element with the element that is specified in the transform file. If more than one element is selected, all will be replaced.
+#####Example
+Source:
+```
+<list2>
+  <item>Zero</item>
+  <item>Zero</item>
+  <item>One</item>
+</list2>
+```
+Transform:
+```
+<list2>
+  <item xdt:Locator="Condition(.='Zero')" xdt:Transform="ReplaceAll">0</item>
+</list2>
+```
+Result:
+```
+<list2>
+  <item>0</item>
+  <item>0</item>
+  <item>One</item>
+</list2>
+```
 ###Other Documentation Resources and Features to Add
 https://github.com/projectkudu/kudu/wiki/Xdt-transform-samples
 http://sedodream.com/2010/09/09/ExtendingXMLWebconfigConfigTransformation.aspx

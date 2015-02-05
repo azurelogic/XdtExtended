@@ -42,4 +42,8 @@
       <property xct:Transform="InsertMultiple"/>
     </item>
   </list>
+
+  <list2>
+    <item xct:Locator="Condition(.='Zero')" xct:Transform="ReplaceAll">0</item>
+  </list2>
 </configuration>
