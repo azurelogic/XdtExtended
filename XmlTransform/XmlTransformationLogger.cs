@@ -193,6 +193,7 @@ namespace Microsoft.Web.XmlTransform.Extended
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(fileName)) return fileName;
                 var uri = new Uri(fileName);
                 if (uri.IsFile && String.IsNullOrEmpty(uri.Host))
                     fileName = uri.LocalPath;
